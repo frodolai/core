@@ -163,7 +163,9 @@ dtb-$(CONFIG_ARCH_MXC) += \
 	imx6sx-sdb-m4.dtb \
 	imx6sx-sabreauto.dtb \
 	imx6sx-sabreauto-m4.dtb \
-	vf610-twr.dtb
+	vf610-twr.dtb \
+	imx6q-rev-sa01.dtb \
+	imx6solo-rev-sa01.dtb
 dtb-$(CONFIG_ARCH_MXS) += imx23-evk.dtb \
 	imx23-olinuxino.dtb \
 	imx23-stmp378x_devb.dtb \
@@ -252,6 +254,7 @@ dtb-$(CONFIG_ARCH_VT8500) += vt8500-bv07.dtb \
 	wm8650-mid.dtb \
 	wm8850-w70v2.dtb
 dtb-$(CONFIG_ARCH_ZYNQ) += zynq-zc702.dtb
+
 
 targets += dtbs
 targets += $(dtb-y)

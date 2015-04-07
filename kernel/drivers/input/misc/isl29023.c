@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2012 Freescale Semiconductor, Inc. All Rights Reserved.
+ * Copyright (C) 2011-2014 Freescale Semiconductor, Inc. All Rights Reserved.
  */
 
 /*
@@ -27,8 +27,9 @@
 #include <linux/irq.h>
 #include <linux/mutex.h>
 #include <linux/delay.h>
+#include <linux/of.h>
+#include <linux/regulator/consumer.h>
 #include <linux/isl29023.h>
-#include <linux/fsl_devices.h>
 
 #define ISL29023_DRV_NAME	"isl29023"
 #define DRIVER_VERSION		"1.0"
@@ -56,6 +57,7 @@
 
 #define ISL29023_NUM_CACHABLE_REGS	8
 #define DEF_RANGE			2
+#define DEFAULT_REGISTOR_VAL		499
 
 struct isl29023_data {
 	struct i2c_client *client;
@@ -580,6 +582,8 @@ static ssize_t isl29023_store_mode(struct device *dev,
 	    (val > ISL29023_IR_CONT_MODE))
 		return -EINVAL;
 
+	/* clear the interrupt flag */
+	i2c_smbus_read_byte_data(client, ISL29023_COMMAND1);
 	ret = isl29023_set_mode(client, val);
 	if (ret < 0)
 		return ret;
@@ -842,6 +846,11 @@ static void isl29023_work(struct work_struct *work)
 static irqreturn_t isl29023_irq_handler(int irq, void *handle)
 {
 	struct isl29023_data *data = handle;
+	int cmd_1;
+	cmd_1 = i2c_smbus_read_byte_data(data->client, ISL29023_COMMAND1);
+	if (!(cmd_1 & ISL29023_INT_FLAG_MASK))
+		return IRQ_NONE;
+
 	queue_work(data->workqueue, &data->work);
 	return IRQ_HANDLED;
 }
@@ -850,14 +859,33 @@ static irqreturn_t isl29023_irq_handler(int irq, void *handle)
  * I2C layer
  */
 
-static int __devinit isl29023_probe(struct i2c_client *client,
+static int isl29023_probe(struct i2c_client *client,
 				    const struct i2c_device_id *id)
 {
 	struct i2c_adapter *adapter = to_i2c_adapter(client->dev.parent);
 	struct isl29023_data *data;
-	struct fsl_mxc_lightsensor_platform_data *ls_data;
 	struct input_dev *input_dev;
 	int err = 0;
+	struct regulator *vdd = NULL;
+	u32 rext = 0;
+	struct device_node *of_node = client->dev.of_node;
+	struct irq_data *irq_data = irq_get_irq_data(client->irq);
+	u32 irq_flag;
+	bool shared_irq;
+
+	vdd = devm_regulator_get(&client->dev, "vdd");
+	if (!IS_ERR(vdd)) {
+		err  = regulator_enable(vdd);
+		if (err) {
+			dev_err(&client->dev, "vdd set voltage error\n");
+			return err;
+		}
+	}
+
+	err = of_property_read_u32(of_node, "rext", &rext);
+	if (err)
+		rext = DEFAULT_REGISTOR_VAL;
+	shared_irq = of_property_read_bool(of_node, "shared-interrupt");
 
 	if (!i2c_check_functionality(adapter, I2C_FUNC_SMBUS_BYTE))
 		return -EIO;
@@ -866,11 +894,8 @@ static int __devinit isl29023_probe(struct i2c_client *client,
 	if (!data)
 		return -ENOMEM;
 
-	ls_data = (struct fsl_mxc_lightsensor_platform_data *)
-	    (client->dev).platform_data;
-
 	data->client = client;
-	data->rext = ls_data->rext;
+	data->rext = (u16)rext;
 	snprintf(data->phys, sizeof(data->phys),
 		 "%s", dev_name(&client->dev));
 	i2c_set_clientdata(client, data);
@@ -905,10 +930,13 @@ static int __devinit isl29023_probe(struct i2c_client *client,
 	if (err)
 		goto exit_free_input;
 
-	/* set irq type to edge falling */
-	irq_set_irq_type(client->irq, IRQF_TRIGGER_FALLING);
-	err = request_irq(client->irq, isl29023_irq_handler, 0,
-			  client->dev.driver->name, data);
+	irq_flag = irqd_get_trigger_type(irq_data);
+	irq_flag |= IRQF_ONESHOT;
+	if (shared_irq)
+		irq_flag |= IRQF_SHARED;
+	err = request_threaded_irq(client->irq, NULL,
+					isl29023_irq_handler, irq_flag,
+					client->dev.driver->name, data);
 	if (err < 0) {
 		dev_err(&client->dev, "failed to register irq %d!\n",
 			client->irq);
@@ -935,7 +963,7 @@ exit_kfree:
 	return err;
 }
 
-static int __devexit isl29023_remove(struct i2c_client *client)
+static int isl29023_remove(struct i2c_client *client)
 {
 	struct isl29023_data *data = i2c_get_clientdata(client);
 
@@ -992,7 +1020,7 @@ static struct i2c_driver isl29023_driver = {
 	.suspend = isl29023_suspend,
 	.resume	= isl29023_resume,
 	.probe	= isl29023_probe,
-	.remove	= __devexit_p(isl29023_remove),
+	.remove	= isl29023_remove,
 	.id_table = isl29023_id,
 };
 

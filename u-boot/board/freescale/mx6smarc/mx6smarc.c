@@ -71,6 +71,18 @@ DECLARE_GLOBAL_DATA_PTR;
 #ifdef CONFIG_SYS_I2C_MXC
 #define PC MUX_PAD_CTRL(I2C_PAD_CTRL)
 /* I2C2 Camera, MIPI, pfuze */
+struct i2c_pads_info i2c_pad_info0 = {
+	.scl = {
+		.i2c_mode = MX6_PAD_CSI0_DAT9__I2C1_SCL | PC,
+		.gpio_mode = MX6_PAD_CSI0_DAT9__GPIO5_IO27 | PC,
+		.gp = IMX_GPIO_NR(5, 27)
+	},
+	.sda = {
+		.i2c_mode = MX6_PAD_CSI0_DAT8__I2C1_SDA | PC,
+		.gpio_mode = MX6_PAD_CSI0_DAT8__GPIO5_IO26 | PC,
+		.gp = IMX_GPIO_NR(5, 26)
+	}
+};
 struct i2c_pads_info i2c_pad_info1 = {
 	.scl = {
 		.i2c_mode = MX6_PAD_KEY_COL3__I2C2_SCL | PC,
@@ -287,7 +299,7 @@ static int setup_pmic_voltages(void)
 {
 	unsigned char value, rev_id = 0 ;
 
-	i2c_set_bus_num(1);
+	i2c_set_bus_num(0);
 	if (!i2c_probe(0x8)) {
 		if (i2c_read(0x8, 0, 1, &value, 1)) {
 			printf("Read device ID error!\n");
@@ -1158,7 +1170,6 @@ int board_init(void)
 static const struct boot_mode board_boot_modes[] = {
 	/* 4 bit bus width */
 	{"sd2",	 MAKE_CFGVAL(0x40, 0x28, 0x00, 0x00)},
-	/*{"sd3",	 MAKE_CFGVAL(0x40, 0x30, 0x00, 0x00)},*/
 	/* 8 bit bus width */
 	{"emmc", MAKE_CFGVAL(0x60, 0x58, 0x00, 0x00)},
 	{NULL,	 0},
@@ -1173,8 +1184,7 @@ int board_late_init(void)
 #endif
 
 #ifdef CONFIG_SYS_I2C_MXC
-	setup_i2c(1, CONFIG_SYS_I2C_SPEED,
-			0x7f, &i2c_pad_info1);
+	setup_i2c(0, CONFIG_SYS_I2C_SPEED, 0x7f, &i2c_pad_info0);
 	ret = setup_pmic_voltages();
 	if (ret)
 		return -1;

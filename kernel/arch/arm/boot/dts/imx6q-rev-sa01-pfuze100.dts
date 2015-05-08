@@ -1,0 +1,58 @@
+/dts-v1/;
+
+#include "imx6q-smarc.dtsi"
+#include "imx6qdl-rev-sa01-pfuze100.dtsi"
+
+/ {
+	model = "Freescale i.MX6 Quad SMARC REV-SA01 Device Board";
+	compatible = "fsl,imx6q-smarc", "fsl,imx6q";
+};
+
+&ldb {
+	lvds-channel@0 {
+		crtc = "ipu2-di0";
+	};
+
+	lvds-channel@1 {
+		crtc = "ipu2-di1";
+	};
+};
+
+&mxcfb1 {
+	status = "okay";
+};
+
+&sata {
+	status = "okay";
+};
+
+/*
+&pcie {
+	status = "okay";
+};
+*/
+
+&cpu0 {
+        arm-supply = <&sw1a_reg>;
+        soc-supply = <&sw1c_reg>;
+        pu-supply = <&pu_dummy>; /* use pu_dummy if VDDSOC share with VDDPU */
+};
+
+&gpc {
+        fsl,cpu_pupscr_sw2iso = <0xf>;
+        fsl,cpu_pupscr_sw = <0xf>;
+        fsl,cpu_pdnscr_iso2sw = <0x1>;
+        fsl,cpu_pdnscr_iso = <0x1>;
+        fsl,ldo-bypass = <1>; /* use ldo-bypass, u-boot will check it and configure */
+        fsl,wdog-reset = <2>; /* watchdog select of reset source */
+        pu-supply = <&pu_dummy>; /* ldo-bypass:use pu_dummy if VDDSOC share with VDDPU */
+};
+
+&gpu {
+        pu-supply = <&pu_dummy>; /* ldo-bypass:use pu_dummy if VDDSOC share with VDDPU */
+};
+
+&vpu {
+        pu-supply = <&pu_dummy>; /* ldo-bypass:use pu_dummy if VDDSOC share with VDDPU */
+};
+

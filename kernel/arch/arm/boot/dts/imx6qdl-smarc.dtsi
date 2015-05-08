@@ -105,6 +105,17 @@
 	};
 };
 
+&iomuxc {
+        pcie1 {
+                pinctrl_pcie_1: pcie1grp-1 {
+                        fsl,pins = <
+                                MX6QDL_PAD_GPIO_19__GPIO4_IO05		0x80000000
+                                MX6QDL_PAD_EIM_DA10__GPIO3_IO10		0x80000000
+                        >;
+                };
+        };
+};
+
 &pwm1 {
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_pwm1_1>;
@@ -147,8 +158,10 @@
 };
 
 &pcie {
-	power-on-gpio = <&gpio3 19 0>;
-	reset-gpio = <&gpio7 12 0>;
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_pcie_1>;
+	wake-up-gpio = <&gpio3 10 0>;
+	reset-gpio = <&gpio4 5 0>;
 	status = "disabled";
 };
 

@@ -22,6 +22,13 @@ kernel.bin: cleankernel
 	install kernel/arch/arm/boot/dts/imx6solo-rev-sa01-wm8326.dtb out/imx6solo-rev-sa01-wm8326.dtb
 	install kernel/arch/arm/boot/dts/imx6solo-rev-sa01-pfuze100.dtb out/imx6solo-rev-sa01-pfuze100.dtb
 
+dtbs:
+	$(MAKE) ARCH=arm CROSS_COMPILE=$(CROSS_COMPILE) -C kernel/ imx_v7_defconfig
+	$(MAKE) ARCH=arm CROSS_COMPILE=$(CROSS_COMPILE) -C kernel/ dtbs
+	install kernel/arch/arm/boot/dts/imx6q-rev-sa01-wm8326.dtb out/imx6q-rev-sa01-wm8326.dtb
+	install kernel/arch/arm/boot/dts/imx6q-rev-sa01-pfuze100.dtb out/imx6q-rev-sa01-pfuze100.dtb
+	install kernel/arch/arm/boot/dts/imx6solo-rev-sa01-wm8326.dtb out/imx6solo-rev-sa01-wm8326.dtb
+	install kernel/arch/arm/boot/dts/imx6solo-rev-sa01-pfuze100.dtb out/imx6solo-rev-sa01-pfuze100.dtb
 ##########
 # U-Boot #
 ##########

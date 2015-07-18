@@ -6,6 +6,24 @@
 			gpio = <&gpio4 10 0>;
 			enable-active-high;
 		};
+
+		reg_lcd_pwr: lcd_pwr {
+			compatible = "regulator-fixed";
+			regulator-name = "lcd_pwr";
+			gpio = <&gpio2 22 0>;
+			enable-active-high;
+			regulator-always-on;
+			regulator-boot-on;
+		};
+
+		reg_bklt_pwr: bklt_pwr {
+			compatible = "regulator-fixed";
+			regulator-name = "bklt_pwr";
+			gpio = <&gpio3 0 0>;
+			enable-active-high;
+			regulator-always-on;
+			regulator-boot-on;
+		};
 	};
 
 	sound {
@@ -112,6 +130,10 @@
 				MX6QDL_PAD_GPIO_0__CCM_CLKO1    0x130b0
 				MX6QDL_PAD_SD1_DAT1__GPIO1_IO17 0x80000000
 				MX6QDL_PAD_EIM_D16__GPIO3_IO16  0x80000000
+				/* LCD_VDD_EN & LCD_BKLT_EN */
+				MX6QDL_PAD_EIM_A16__GPIO2_IO22 0x80000000
+				MX6QDL_PAD_EIM_DA0__GPIO3_IO00 0x80000000
+
 			>;
 		};
 	};

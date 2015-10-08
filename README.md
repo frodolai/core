@@ -1,0 +1,2 @@
+# core
+smarc Linux temp
